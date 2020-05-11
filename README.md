@@ -31,15 +31,15 @@ Following info can be parameterized for each file upload flow-
 5. IsEmailApprovalRequried – Yes/No
 6. Expected File upload time
 
-![image](https://github.com/arvind-dhariwal/offline-data-collection/media/arch.png)
+![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/arch.png)
 
 # File upload flow  using Logic App
 
-![image](https://github.com/arvind-dhariwal/offline-data-collection/media/logicAppFlow.png)
+![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/logicAppFlow.png)
 
 # Sample Email approval request
 Body, Subject in email can be customized.
-![image](https://github.com/arvind-dhariwal/offline-data-collection/media/SampleApprovalEmail.png)
+![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/SampleApprovalEmail.png)
 
 # Sample Success Notification email to business user.
-![image](https://github.com/arvind-dhariwal/offline-data-collection/media/NotificationEmailToBusinessUser.png)
+![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/NotificationEmailToBusinessUser.png)

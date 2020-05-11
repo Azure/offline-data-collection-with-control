@@ -1,0 +1,345 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workflows_FileUploadFromSharePoint_name": {
+            "defaultValue": "FileUploadFromSharePoint",
+            "type": "String"
+        },
+        "connections_azureblob_1_externalid": {
+            "defaultValue": "/subscriptions/6cca3516-d02e-494a-a828-cc05b0811f29/resourceGroups/rg-petronas/providers/Microsoft.Web/connections/azureblob-1",
+            "type": "String"
+        },
+        "connections_office365_externalid": {
+            "defaultValue": "/subscriptions/6cca3516-d02e-494a-a828-cc05b0811f29/resourceGroups/rg-petronas/providers/Microsoft.Web/connections/office365",
+            "type": "String"
+        },
+        "connections_sharepointonline_externalid": {
+            "defaultValue": "/subscriptions/6cca3516-d02e-494a-a828-cc05b0811f29/resourceGroups/rg-petronas/providers/Microsoft.Web/connections/sharepointonline",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('workflows_FileUploadFromSharePoint_name')]",
+            "location": "southeastasia",
+            "properties": {
+                "state": "Disabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        },
+                        "Folder_Id": {
+                            "defaultValue": "/Shared Documents/Test",
+                            "type": "String"
+                        },
+                        "IsEmailApprovalRequired": {
+                            "defaultValue": true,
+                            "type": "Bool"
+                        },
+                        "IsSchemaValidation": {
+                            "defaultValue": true,
+                            "type": "Bool"
+                        },
+                        "SiteAddress": {
+                            "defaultValue": "adhariwal - https://microsoftapc.sharepoint.com/teams/adhariwal",
+                            "type": "String"
+                        },
+                        "expectedUploadTime": {
+                            "defaultValue": 1,
+                            "type": "Int"
+                        }
+                    },
+                    "triggers": {
+                        "When_a_file_is_created_in_a_folder": {
+                            "recurrence": {
+                                "frequency": "Second",
+                                "interval": 3
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sharepointonline']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://microsoftapc.sharepoint.com/teams/adhariwal'))}/triggers/onnewfile",
+                                "queries": {
+                                    "folderId": "/Shared Documents/Test",
+                                    "inferContentType": true,
+                                    "queryParametersSingleEncoded": true
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Compare_actual_and_expected_schema": {
+                            "actions": {},
+                            "runAfter": {
+                                "Send_email_for_file_upload_approval": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@body('Get_file_metadata')?['MediaType']",
+                                            "text/csv"
+                                        ]
+                                    },
+                                    {
+                                        "equals": [
+                                            "@parameters('IsSchemaValidation')",
+                                            true
+                                        ]
+                                    },
+                                    {
+                                        "equals": [
+                                            "@first(split(triggerBody(),'\r\n'))",
+                                            "OrderNo, OrderDesc, Qty"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
+                        "Create_sharing_link_for_a_file_or_folder": {
+                            "runAfter": {
+                                "Get_file_metadata": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": {
+                                    "scope": "organization",
+                                    "type": "view"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sharepointonline']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://microsoftapc.sharepoint.com/teams/adhariwal'))}/codeless/_api/v2.0/sites/root/lists/@{encodeURIComponent(encodeURIComponent('a35139a4-b514-4eaa-938f-2004a9c82276'))}/items/@{encodeURIComponent(encodeURIComponent(body('Get_file_metadata')?['ItemId']))}/driveItem/createLink"
+                            }
+                        },
+                        "Get_file_metadata": {
+                            "runAfter": {},
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sharepointonline']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://microsoftapc.sharepoint.com/teams/adhariwal'))}/files/@{encodeURIComponent(triggerOutputs()['headers']['x-ms-file-id'])}"
+                            }
+                        },
+                        "Get_file_properties": {
+                            "runAfter": {
+                                "Create_sharing_link_for_a_file_or_folder": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sharepointonline']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://microsoftapc.sharepoint.com/teams/adhariwal'))}/tables/@{encodeURIComponent(encodeURIComponent('a35139a4-b514-4eaa-938f-2004a9c82276'))}/items/@{encodeURIComponent(body('Get_file_metadata')?['ItemId'])}/getfileitem"
+                            }
+                        },
+                        "Send_email_for_file_upload_approval": {
+                            "actions": {
+                                "Condition_2": {
+                                    "actions": {},
+                                    "runAfter": {
+                                        "Send_file_approval_email_to_Approver": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@body('Send_file_approval_email_to_Approver')?['SelectedOption']",
+                                                    "Approve"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "type": "If"
+                                },
+                                "Send_file_approval_email_to_Approver": {
+                                    "runAfter": {},
+                                    "type": "ApiConnectionWebhook",
+                                    "inputs": {
+                                        "body": {
+                                            "Message": {
+                                                "Attachments": [
+                                                    {
+                                                        "ContentBytes": "@{base64(triggerBody())}",
+                                                        "Name": "@base64ToString(triggerOutputs()['headers']['x-ms-file-name-encoded'])"
+                                                    }
+                                                ],
+                                                "Body": "|File Name - @{body('Get_file_properties')?['{FilenameWithExtension}']}\n|\nItem -@{body('Get_file_metadata')?['ItemId']}|\nId - @{body('Get_file_metadata')?['Id']}|\nFull Path - @{body('Get_file_properties')?['{FullPath}']}|\nLink - @{body('Get_file_properties')?['{Link}']}|\nSharing link - @{body('Create_sharing_link_for_a_file_or_folder')?['link']?['webUrl']}|\nVersion - @{body('Get_file_properties')?['{VersionNumber}']}|\nMedia Type - @{body('Get_file_metadata')?['MediaType']}|\nCreated on - @{body('Get_file_properties')?['Created']}. |\nModified on - @{body('Get_file_properties')?['Modified']}|\nCreated By -  @{body('Get_file_properties')?['Author']?['Email']}|\nModified By - @{body('Get_file_properties')?['Editor']?['Email']}|\nComments - @{body('Get_file_properties')?['{ModerationComment}']}|Content Approval @{body('Get_file_properties')?['{ModerationStatus}']}\n|",
+                                                "Importance": "Normal",
+                                                "Options": "Approve, Reject",
+                                                "Subject": "Approval Request for ",
+                                                "To": "Kumar.arvind@microsoft.com",
+                                                "UseOnlyHTMLMessage": true
+                                            },
+                                            "NotificationUrl": "@{listCallbackUrl()}"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['office365']['connectionId']"
+                                            }
+                                        },
+                                        "path": "/approvalmail/$subscriptions"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Get_file_properties": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "expression": {
+                                "and": [
+                                    {
+                                        "equals": [
+                                            "@parameters('IsEmailApprovalRequired')",
+                                            true
+                                        ]
+                                    }
+                                ]
+                            },
+                            "type": "If"
+                        },
+                        "Success_Notification_to_File_Uploader": {
+                            "runAfter": {
+                                "Upload_metadata_to_datalake": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": {
+                                    "Body": "<p>Hi,<br>\n<br>\nFile @{base64ToString(triggerOutputs()['headers']['x-ms-file-path-encoded'])}/@{body('Get_file_properties')?['{FilenameWithExtension}']} is uploaded to EDH succesfully at @{utcNow()}<br>\n<br>\n<br>\n<br>\n<br>\n<br>\n</p>",
+                                    "Subject": "File uploaded  @{body('Get_file_metadata')?['DisplayName']} - Successfully",
+                                    "To": "@body('Get_file_properties')?['Editor']?['Email']"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['office365']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/v2/Mail"
+                            }
+                        },
+                        "Upload_file_to_datalake": {
+                            "runAfter": {
+                                "Compare_actual_and_expected_schema": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": "@triggerBody()",
+                                "headers": {
+                                    "Content-Type": "@triggerOutputs()['headers']['Content-Type']"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['azureblob_1']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/datasets/default/files",
+                                "queries": {
+                                    "folderPath": "/container-123/test123/",
+                                    "name": "@base64ToString(triggerOutputs()['headers']['x-ms-file-name-encoded'])",
+                                    "queryParametersSingleEncoded": true
+                                }
+                            },
+                            "runtimeConfiguration": {
+                                "contentTransfer": {
+                                    "transferMode": "Chunked"
+                                }
+                            }
+                        },
+                        "Upload_metadata_to_datalake": {
+                            "runAfter": {
+                                "Upload_file_to_datalake": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": "file_name,full_path,file_link,version,media_type,created_at,modified_at,created_by,modified_by,comments\n@{body('Get_file_properties')?['{FilenameWithExtension}']},@{body('Get_file_properties')?['{FullPath}']},@{body('Get_file_properties')?['{Link}']},@{body('Get_file_properties')?['{VersionNumber}']},@{body('Get_file_metadata')?['MediaType']},@{body('Get_file_properties')?['Created']}, @{body('Get_file_properties')?['Modified']},|@{body('Get_file_properties')?['Author']?['Email']},@{body('Get_file_properties')?['Editor']?['Email']},@{body('Get_file_properties')?['{ModerationComment}']}",
+                                "headers": {
+                                    "Content-Type": "text/csv"
+                                },
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['azureblob_1']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/datasets/default/files",
+                                "queries": {
+                                    "folderPath": "/container-456/metadata/",
+                                    "name": "metadata_@{body('Upload_file_to_datalake')?['DisplayName']}.csv",
+                                    "queryParametersSingleEncoded": true
+                                }
+                            },
+                            "runtimeConfiguration": {
+                                "contentTransfer": {
+                                    "transferMode": "Chunked"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "azureblob_1": {
+                                "connectionId": "[parameters('connections_azureblob_1_externalid')]",
+                                "connectionName": "azureblob-1",
+                                "id": "/subscriptions/6cca3516-d02e-494a-a828-cc05b0811f29/providers/Microsoft.Web/locations/southeastasia/managedApis/azureblob"
+                            },
+                            "office365": {
+                                "connectionId": "[parameters('connections_office365_externalid')]",
+                                "connectionName": "office365",
+                                "id": "/subscriptions/6cca3516-d02e-494a-a828-cc05b0811f29/providers/Microsoft.Web/locations/southeastasia/managedApis/office365"
+                            },
+                            "sharepointonline": {
+                                "connectionId": "[parameters('connections_sharepointonline_externalid')]",
+                                "connectionName": "sharepointonline",
+                                "id": "/subscriptions/6cca3516-d02e-494a-a828-cc05b0811f29/providers/Microsoft.Web/locations/southeastasia/managedApis/sharepointonline"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -10,7 +10,7 @@
 2. **As** a data architect, **i want** to facilate my business user to upload file with set of guidelines(like they upload data in predefined file tempalte ,  files goes for approval over email and file is uploaded on given frequency) and automated flow **so that** collect and store data in central location datalake and datawarehouse company wide , make it available to everyone and file upload should be rejected in case of not following guidelines.
 3. **As** a head of business,**i want** file metadata reporting **so that** i can see what all monthly and quaretly files has been prepared by my department and shared with Enterprise data team to process it for reporting, also want to see the link of file in metadata reproting in case i wwant to open the file.
 
-# High level architecture for single File upload process
+# High level architecture for single file upload process
 A solution for creating centralized offline data collection with control
 
 This is high level end to end single file upload flow with control from SharePoint to azure datalake.
@@ -45,13 +45,13 @@ Following info can be parameterized for each file upload flow-
 
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/arch.png)
 
-# File upload flow  using Logic App
+# File upload flow  using logic App
 
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/logicAppFlow.png)
 
-# Sample Email approval request
+# Sample email approval request
 Body, Subject in email can be customized.
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/SampleApprovalEmail.png)
 
-# Sample Success Notification email to business user.
+# Sample success notification email to business user.
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/NotificationEmailToBusinessUser.png)

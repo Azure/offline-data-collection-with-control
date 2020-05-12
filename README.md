@@ -46,7 +46,7 @@ Following info can be parameterized for each file upload flow-
 
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/arch.png)
 
-# File upload flow  using logic App
+# sample file upload flow using logic App with upload approval and schema validation
 
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/logicAppFlow.png)
 

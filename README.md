@@ -4,6 +4,7 @@
 3. Data are collected manaually and uploaded to datalake, no automation on communication and approval side.
 4. As head of business user not able to view what all monthly and quarterly data file is ready and processed so that i can expect those data in reporting dashboard.
 5. Sometime ETL is failed while processing data file provided by business user because they have provided same data in different schema(adding one more column) or duplicate file.
+6. Business users are not expected with technical steps where they login to Azure datalake and upload the files.
 
 # User stories
 1. **As** a buseinss user, **i want** to combine my monthly and/or quartely data available on my laptop with existing dataware house tables **so that** i can report and perform analysis with bigger scope. My data sits in silo.

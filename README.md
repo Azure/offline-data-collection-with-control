@@ -47,9 +47,12 @@ Following info can be parameterized for each file upload flow-
 
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/arch.png)
 
-# sample file upload flow using logic App with upload approval and schema validation
-
+# Sample file upload flow using logic App with upload approval and schema validation
+## Using blob connector for ADLSGen2
 ![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/logicAppFlow.png)
+
+## Using HTTPs connector for ADLSGen2
+![image](https://github.com/arvind-dhariwal/offline-data-collection/blob/master/media/sharepointToADLSUsingHTTP.png)
 
 # Sample email approval request
 Body, Subject in email can be customized.
